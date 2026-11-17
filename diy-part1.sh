@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 1. 在内核配置中强制开启联发科 NMBM 坏块管理驱动（对接 H大 U-Boot 必须项）
+echo "CONFIG_MTD_NAND_MTK_BMT=y" >> target/linux/mediatek/filogic/config-6.12
+
 mkdir -p target/linux/mediatek/dts
 
 cat << 'EOF' > target/linux/mediatek/dts/mt7981b-qihoo-360t7-ubootmod.dts
@@ -16,6 +19,10 @@ cat << 'EOF' > target/linux/mediatek/dts/mt7981b-qihoo-360t7-ubootmod.dts
 &spi0 {
 	flash@0 {
 		/delete-node/ partitions;
+
+		mediatek,nmbm;
+		mediatek,bmt-max-ratio = <1>;
+		mediatek,bmt-max-reserved-blocks = <64>;
 
 		partitions {
 			compatible = "fixed-partitions";
