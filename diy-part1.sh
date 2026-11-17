@@ -10,8 +10,9 @@ cd nmbm_src
 git sparse-checkout set target/linux/mediatek/files-6.12 target/linux/mediatek/patches-6.12 target/linux/mediatek/files-6.6 target/linux/mediatek/patches-6.6
 cd ..
 
-# 2. 复制 NMBM 驱动源码与补丁到当前 6.12 编译目录
+# 2. 复制 NMBM 驱动源码与补丁到当前 6.12 编译目录（不覆盖原生 Makefile）
 mkdir -p target/linux/mediatek/files-6.12/drivers/mtd
+mkdir -p target/linux/mediatek/patches-6.12
 for ver in 6.12 6.6; do
     if [ -d "nmbm_src/target/linux/mediatek/files-${ver}/drivers/mtd/nmbm" ]; then
         cp -rf nmbm_src/target/linux/mediatek/files-${ver}/drivers/mtd/nmbm target/linux/mediatek/files-6.12/drivers/mtd/
@@ -22,10 +23,25 @@ for ver in 6.12 6.6; do
 done
 rm -rf nmbm_src
 
-# 3. 挂载 NMBM 编译选项到 6.12 内核配置与 Makefile
-if ! grep -q "nmbm" target/linux/mediatek/files-6.12/drivers/mtd/Makefile 2>/dev/null; then
-    echo 'obj-$(CONFIG_MTD_NAND_MTK_BMT) += nmbm/' >> target/linux/mediatek/files-6.12/drivers/mtd/Makefile
-fi
+# 3. 通过标准 999 号补丁安全挂载 NMBM 到内核原生 Makefile 和 Kconfig（避免覆盖原文件导致补丁冲突）
+cat << 'EOF' > target/linux/mediatek/patches-6.12/999-mtd-add-nmbm-support.patch
+--- a/drivers/mtd/Kconfig
++++ b/drivers/mtd/Kconfig
+@@ -42,6 +42,8 @@ config MTD_NAND_CORE
+ 	tristate
+ 
++source "drivers/mtd/nmbm/Kconfig"
++
+ endmenu
+--- a/drivers/mtd/Makefile
++++ b/drivers/mtd/Makefile
+@@ -30,3 +30,4 @@ obj-$(CONFIG_MTD_SPI_NOR)	+= spi-nor/
+ obj-$(CONFIG_MTD_UBI)		+= ubi/
+ 
+ obj-$(CONFIG_MTD_HYPERBUS)	+= hyperbus/
++obj-$(CONFIG_MTD_NAND_NMBM)	+= nmbm/
+EOF
+
 echo "CONFIG_MTD_NAND_MTK_BMT=y" >> target/linux/mediatek/filogic/config-6.12
 echo "CONFIG_MTD_NAND_NMBM=y" >> target/linux/mediatek/filogic/config-6.12
 
