@@ -15,6 +15,8 @@ cat << 'EOF' > target/linux/mediatek/dts/mt7981b-qihoo-360t7-ubootmod.dts
 
 &spi0 {
 	flash@0 {
+		/delete-node/ partitions;
+
 		partitions {
 			compatible = "fixed-partitions";
 			#address-cells = <1>;
@@ -31,7 +33,7 @@ cat << 'EOF' > target/linux/mediatek/dts/mt7981b-qihoo-360t7-ubootmod.dts
 				reg = <0x100000 0x80000>;
 			};
 
-			factory: partition@180000 {
+			partition@180000 {
 				label = "Factory";
 				reg = <0x180000 0x200000>;
 				read-only;
