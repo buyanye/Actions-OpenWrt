@@ -21,3 +21,13 @@ define Device/qihoo_360t7-ubootmod
 endef
 TARGET_DEVICES += qihoo_360t7-ubootmod
 EOF
+
+if ! grep -q "nmbm/Kconfig" target/linux/mediatek/Makefile; then
+cat << 'EOF' >> target/linux/mediatek/Makefile
+
+define Kernel/Prepare/Post
+	grep -q "nmbm/Kconfig" $(LINUX_DIR)/drivers/mtd/Kconfig || sed -i 's|^endmenu|source "drivers/mtd/nmbm/Kconfig"\nendmenu|' $(LINUX_DIR)/drivers/mtd/Kconfig
+	grep -q "nmbm/" $(LINUX_DIR)/drivers/mtd/Makefile || echo 'obj-$$(CONFIG_MTD_NAND_NMBM) += nmbm/' >> $(LINUX_DIR)/drivers/mtd/Makefile
+endef
+EOF
+fi
