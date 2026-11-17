@@ -1,10 +1,35 @@
 #!/bin/bash
 
-# 1. 在内核配置中强制开启联发科 NMBM 坏块管理驱动（对接 H大 U-Boot 必须项）
+# 1. 从已适配 6.12 内核的开源 MT798x 仓库自动提取完整的 NMBM 驱动源码与补丁（不带任何第三方界面魔改）
+git clone --depth=1 --filter=blob:none --sparse https://github.com/coolsnowwolf/lede.git nmbm_src 2>/dev/null || \
+git clone --depth=1 --filter=blob:none --sparse https://github.com/padavanonly/immortalwrt-mt798x.git nmbm_src
+
+cd nmbm_src
+git sparse-checkout set target/linux/mediatek/files-6.12 target/linux/mediatek/patches-6.12 target/linux/mediatek/files-6.6 target/linux/mediatek/patches-6.6
+cd ..
+
+# 2. 优先复制 6.12 专属 NMBM 驱动与补丁；若上游在 6.6 目录则自动适配移植到 6.12
+mkdir -p target/linux/mediatek/files-6.12/drivers/mtd
+if [ -d "nmbm_src/target/linux/mediatek/files-6.12/drivers/mtd/nmbm" ]; then
+    cp -rf nmbm_src/target/linux/mediatek/files-6.12/drivers/mtd/nmbm target/linux/mediatek/files-6.12/drivers/mtd/
+    cp -f nmbm_src/target/linux/mediatek/patches-6.12/*nmbm* target/linux/mediatek/patches-6.12/ 2>/dev/null || true
+    cp -f nmbm_src/target/linux/mediatek/patches-6.12/*bmt* target/linux/mediatek/patches-6.12/ 2>/dev/null || true
+elif [ -d "nmbm_src/target/linux/mediatek/files-6.6/drivers/mtd/nmbm" ]; then
+    cp -rf nmbm_src/target/linux/mediatek/files-6.6/drivers/mtd/nmbm target/linux/mediatek/files-6.12/drivers/mtd/
+    cp -f nmbm_src/target/linux/mediatek/patches-6.6/*nmbm* target/linux/mediatek/patches-6.12/ 2>/dev/null || true
+    cp -f nmbm_src/target/linux/mediatek/patches-6.6/*bmt* target/linux/mediatek/patches-6.12/ 2>/dev/null || true
+fi
+rm -rf nmbm_src
+
+# 3. 挂载 NMBM 编译选项到 6.12 内核配置与 Makefile
+if ! grep -q "nmbm" target/linux/mediatek/files-6.12/drivers/mtd/Makefile 2>/dev/null; then
+    echo 'obj-$(CONFIG_MTD_NAND_MTK_BMT) += nmbm/' >> target/linux/mediatek/files-6.12/drivers/mtd/Makefile
+fi
 echo "CONFIG_MTD_NAND_MTK_BMT=y" >> target/linux/mediatek/filogic/config-6.12
+echo "CONFIG_MTD_NAND_NMBM=y" >> target/linux/mediatek/filogic/config-6.12
 
+# 4. 生成完全符合 6.12 语法的 360T7 H大 U-Boot (108M 大分区) 设备树
 mkdir -p target/linux/mediatek/dts
-
 cat << 'EOF' > target/linux/mediatek/dts/mt7981b-qihoo-360t7-ubootmod.dts
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 
