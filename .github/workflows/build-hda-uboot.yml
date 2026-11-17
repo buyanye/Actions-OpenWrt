@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: hanwckf/bl-mt798x
-          ref: 20241115
+          ref: 8edae2affbbdf3046be10148199fd9589d5616c4
           path: bl-mt798x
 
       - name: Install dependencies
