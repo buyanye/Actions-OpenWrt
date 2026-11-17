@@ -1,6 +1,7 @@
 #!/bin/bash
 
-if ! grep -q "define Device/qihoo_360t7-ubootmod" target/linux/mediatek/image/filogic.mk; then
+sed -i '/define Device\/qihoo_360t7-ubootmod/,/TARGET_DEVICES += qihoo_360t7-ubootmod/d' target/linux/mediatek/image/filogic.mk
+
 cat << 'EOF' >> target/linux/mediatek/image/filogic.mk
 
 define Device/qihoo_360t7-ubootmod
@@ -20,5 +21,3 @@ define Device/qihoo_360t7-ubootmod
 endef
 TARGET_DEVICES += qihoo_360t7-ubootmod
 EOF
-fi
-
