@@ -13,9 +13,13 @@ define Device/qihoo_360t7-ubootmod
   KERNEL_LOADADDR := 0x44000000
   KERNEL := kernel-bin | lzma | fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
   KERNEL_INITRAMFS := kernel-bin | lzma | fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initramfs
-  IMAGES := sysupgrade.itb
+  UBINIZE_OPTS := -E 5
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
   IMAGE_SIZE := 112640k
-  IMAGE/sysupgrade.itb := append-kernel | pad-rootfs | append-metadata
+  KERNEL_IN_UBI := 1
+  IMAGES := sysupgrade.bin
+  IMAGE/sysupgrade.bin := append-ubi | check-size $$$$(IMAGE_SIZE) | append-metadata
 endef
 TARGET_DEVICES += qihoo_360t7-ubootmod
 EOF
