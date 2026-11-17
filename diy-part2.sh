@@ -10,14 +10,12 @@ define Device/qihoo_360t7-ubootmod
   DEVICE_DTS := mt7981b-qihoo-360t7-ubootmod
   DEVICE_DTS_DIR := ../dts
   DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware
-  UBINIZE_OPTS := -E 5
-  BLOCKSIZE := 128k
-  PAGESIZE := 2048
+  KERNEL_LOADADDR := 0x44000000
+  KERNEL := kernel-bin | lzma | fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
+  KERNEL_INITRAMFS := kernel-bin | lzma | fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initramfs
+  IMAGES := sysupgrade.itb
   IMAGE_SIZE := 112640k
-  KERNEL_IN_UBI := 1
-  IMAGES += factory.bin
-  IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
-  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  IMAGE/sysupgrade.itb := append-kernel | pad-rootfs | append-metadata
 endef
 TARGET_DEVICES += qihoo_360t7-ubootmod
 EOF
