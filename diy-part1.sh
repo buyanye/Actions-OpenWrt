@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 1. 从最新开源 MT798x 仓库提取 NMBM 坏块管理驱动与内核补丁
+# 1. 从最新开源 MT798x 仓库提取完整 NMBM 坏块管理驱动与所有相关补丁
 git clone --depth=1 --filter=blob:none --sparse https://github.com/coolsnowwolf/lede.git nmbm_src
 if [ ! -d "nmbm_src" ]; then
     git clone --depth=1 -b openwrt-24.10 --filter=blob:none --sparse https://github.com/padavanonly/immortalwrt-mt798x.git nmbm_src
@@ -10,12 +10,14 @@ cd nmbm_src
 git sparse-checkout set target/linux/mediatek/files-6.12 target/linux/mediatek/patches-6.12 target/linux/mediatek/files-6.6 target/linux/mediatek/patches-6.6
 cd ..
 
-# 2. 复制 NMBM 驱动源码与补丁到当前 6.12 编译目录
+# 2. 复制 NMBM 驱动及头文件（include/linux/mtd/nmbm*）到 6.12 目录
 mkdir -p target/linux/mediatek/files-6.12/drivers/mtd
+mkdir -p target/linux/mediatek/files-6.12/include/linux/mtd
 mkdir -p target/linux/mediatek/patches-6.12
 for ver in 6.12 6.6; do
     if [ -d "nmbm_src/target/linux/mediatek/files-${ver}/drivers/mtd/nmbm" ]; then
         cp -rf nmbm_src/target/linux/mediatek/files-${ver}/drivers/mtd/nmbm target/linux/mediatek/files-6.12/drivers/mtd/
+        cp -rf nmbm_src/target/linux/mediatek/files-${ver}/include/linux/mtd/*nmbm* target/linux/mediatek/files-6.12/include/linux/mtd/ 2>/dev/null || true
         cp -f nmbm_src/target/linux/mediatek/patches-${ver}/*nmbm* target/linux/mediatek/patches-6.12/ 2>/dev/null || true
         cp -f nmbm_src/target/linux/mediatek/patches-${ver}/*bmt* target/linux/mediatek/patches-6.12/ 2>/dev/null || true
         break
@@ -25,6 +27,7 @@ rm -rf nmbm_src
 
 echo "CONFIG_MTD_NAND_MTK_BMT=y" >> target/linux/mediatek/filogic/config-6.12
 echo "CONFIG_MTD_NAND_NMBM=y" >> target/linux/mediatek/filogic/config-6.12
+echo "CONFIG_MTD_NAND_NMBM_MTD=y" >> target/linux/mediatek/filogic/config-6.12
 
 # 3. 生成适配 360T7 H大 U-Boot (108M 大分区) 的 6.12 设备树
 mkdir -p target/linux/mediatek/dts
