@@ -18,11 +18,11 @@ cat << 'EOF' > target/linux/mediatek/dts/mt7981b-qihoo-360t7-ubootmod.dts
 
 &spi0 {
 	flash@0 {
-		/delete-node/ partitions;
-
 		mediatek,nmbm;
 		mediatek,bmt-max-ratio = <1>;
 		mediatek,bmt-max-reserved-blocks = <64>;
+
+		/delete-node/ partitions;
 
 		partitions {
 			compatible = "fixed-partitions";
