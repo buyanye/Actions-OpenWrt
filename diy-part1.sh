@@ -10,7 +10,7 @@ cd nmbm_src
 git sparse-checkout set target/linux/mediatek/files-6.12 target/linux/mediatek/patches-6.12 target/linux/mediatek/files-6.6 target/linux/mediatek/patches-6.6
 cd ..
 
-# 2. 复制 NMBM 驱动源码与补丁到当前 6.12 编译目录（不覆盖原生 Makefile）
+# 2. 复制 NMBM 驱动源码与补丁到当前 6.12 编译目录
 mkdir -p target/linux/mediatek/files-6.12/drivers/mtd
 mkdir -p target/linux/mediatek/patches-6.12
 for ver in 6.12 6.6; do
@@ -23,24 +23,26 @@ for ver in 6.12 6.6; do
 done
 rm -rf nmbm_src
 
-# 3. 通过标准 999 号补丁安全挂载 NMBM 到内核原生 Makefile 和 Kconfig（避免覆盖原文件导致补丁冲突）
-cat << 'EOF' > target/linux/mediatek/patches-6.12/999-mtd-add-nmbm-support.patch
---- a/drivers/mtd/Kconfig
+# 3. 用 python 动态生成严格符合格式规范的 999 补丁（彻底杜绝复制粘贴丢失 Tab 制表符的问题）
+python3 -c '
+patch = """--- a/drivers/mtd/Kconfig
 +++ b/drivers/mtd/Kconfig
-@@ -42,6 +42,8 @@ config MTD_NAND_CORE
- 	tristate
+@@ -42,4 +42,6 @@ config MTD_NAND_CORE
+ \ttristate
  
 +source "drivers/mtd/nmbm/Kconfig"
 +
  endmenu
 --- a/drivers/mtd/Makefile
 +++ b/drivers/mtd/Makefile
-@@ -30,3 +30,4 @@ obj-$(CONFIG_MTD_SPI_NOR)	+= spi-nor/
- obj-$(CONFIG_MTD_UBI)		+= ubi/
+@@ -30,3 +30,4 @@ obj-$(CONFIG_MTD_SPI_NOR)\t+= spi-nor/
+ obj-$(CONFIG_MTD_UBI)\t\t+= ubi/
  
- obj-$(CONFIG_MTD_HYPERBUS)	+= hyperbus/
-+obj-$(CONFIG_MTD_NAND_NMBM)	+= nmbm/
-EOF
+ obj-$(CONFIG_MTD_HYPERBUS)\t+= hyperbus/
++obj-$(CONFIG_MTD_NAND_NMBM)\t+= nmbm/
+"""
+open("target/linux/mediatek/patches-6.12/999-mtd-add-nmbm-support.patch", "w").write(patch)
+'
 
 echo "CONFIG_MTD_NAND_MTK_BMT=y" >> target/linux/mediatek/filogic/config-6.12
 echo "CONFIG_MTD_NAND_NMBM=y" >> target/linux/mediatek/filogic/config-6.12
