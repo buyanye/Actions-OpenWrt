@@ -1,0 +1,37 @@
+
+name: Build H大 360T7 U-Boot
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout H大源码
+        uses: actions/checkout@v4
+        with:
+          repository: hanwckf/bl-mt798x
+          ref: 20241115
+          path: bl-mt798x
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu \
+            build-essential flex bison \
+            libssl-dev device-tree-compiler \
+            python3 python3-pyelftools
+
+      - name: Build 360T7 FIP
+        run: |
+          cd bl-mt798x
+          SOC=mt7981 BOARD=360t7 FIXED_MTDPARTS=1 ./build.sh
+          test -s output/mt7981_360t7-fip-fixed-parts.bin
+
+      - name: Upload FIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: H-UBoot-360T7-FIP-20241115
+          path: bl-mt798x/output/mt7981_360t7-fip-fixed-parts.bin
